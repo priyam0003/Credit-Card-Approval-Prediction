@@ -192,3 +192,22 @@ plt.pie(df['CNT_CHILDREN'].value_counts(), labels=df['CNT_CHILDREN'].value_count
 plt.title('% of Applications submitted based on Children count')
 plt.legend()
 plt.show()
+
+
+
+
+# This graph shows that, majority of applicatant's income lies between 100,000 to 300,000
+plt.figure(figsize = (20,10))
+plt.hist(df['AMT_INCOME_TOTAL'], bins=20)
+plt.xlabel('Total Annual Income')
+plt.title('Histogram')
+plt.show()
+
+
+
+# This graph shows that, majority of applicatant's are working professional
+plt.figure(figsize = (8,8))
+plt.pie(df['NAME_INCOME_TYPE'].value_counts(), labels=df['NAME_INCOME_TYPE'].value_counts().index, autopct='%1.2f%%')
+plt.title('% of Applications submitted based on Income Type')
+plt.legend()
+plt.show()
