@@ -1,0 +1,194 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+%matplotlib inline
+import seaborn as sns
+
+import warnings
+warnings.filterwarnings('ignore')
+import warnings
+import datetime
+from datetime import timedelta
+warnings.filterwarnings('ignore')
+random_seed = 1
+np.random.seed(random_seed)
+
+
+credit_record = pd.read_csv('C:/Users/CHANDAN PATEL/Desktop/Study USF/Fall Project 22/DM/archive (3)/credit_record.csv')
+application_record = pd.read_csv('C:/Users/CHANDAN PATEL/Desktop/Study USF/Fall Project 22/DM/archive (3)/application_record.csv')
+print(application_record.head())
+
+print(application_record.shape, credit_record.shape)
+
+
+application_record['OCCUPATION_TYPE'].value_counts()
+
+
+# dropping occupation type which has many null values (almost 33% of the data is missing)
+application_record.drop('OCCUPATION_TYPE', axis=1, inplace=True)
+
+
+# Checking duplicates in 'ID' column
+len(application_record['ID']) - len(application_record['ID'].unique())
+
+
+
+# Dropping duplicate entries from ID column
+application_record = application_record.drop_duplicates('ID', keep='last') 
+
+
+application_record.info()
+
+
+
+# Checking Min , Max values from 'DAYS_BIRTH' column
+print('Min DAYS_BIRTH :', application_record['DAYS_BIRTH'].min(),'\nMax DAYS_BIRTH :', application_record['DAYS_BIRTH'].max())
+
+
+# Converting 'DAYS_BIRTH' values from Day to Years
+application_record['DAYS_BIRTH'] = round(application_record['DAYS_BIRTH']/-365,0)
+application_record.rename(columns={'DAYS_BIRTH':'AGE_YEARS'}, inplace=True)
+
+
+
+# Checking unique values greater than 0
+application_record[application_record['DAYS_EMPLOYED']>0]['DAYS_EMPLOYED'].unique()
+# 365243
+# As mentioned in document, if 'DAYS_EMPLOYED' is positive no, it means person currently unemployed, hence replacing it with 0
+application_record['DAYS_EMPLOYED'].replace(365243, 0, inplace=True)
+# Converting 'DAYS_EMPLOYED' values from Day to Years
+application_record['DAYS_EMPLOYED'] = abs(round(application_record['DAYS_EMPLOYED']/-365,0))
+application_record.rename(columns={'DAYS_EMPLOYED':'YEARS_EMPLOYED'}, inplace=True)
+
+
+
+application_record['FLAG_MOBIL'].value_counts()
+
+
+# As all the values in 'Flag_Mobil' column are 1, hence dropping column
+application_record.drop('FLAG_MOBIL', axis=1, inplace=True)
+
+
+
+credit_record.head()
+
+
+
+credit_record.isnull().sum()
+
+
+
+credit_record.info()
+
+
+
+plt.figure(figsize=(10, 7))
+sns.boxplot(x=credit_record['STATUS'], y=credit_record['MONTHS_BALANCE'])
+
+
+# categorizing 'STATUS' column to binary classification   1 : Eligible Client and 0 : Not Eligible client
+credit_record['STATUS'].replace(['C', 'X'],1, inplace=True)
+
+credit_record['STATUS'].replace(['1','2','3','4','5'],0, inplace=True)
+
+credit_record.groupby('STATUS').count()
+grouped=credit_record.groupby('ID')['STATUS'].value_counts()
+number_of_customer_for_each_status=grouped.groupby('STATUS').count()
+number_of_customer_for_each_status.plot(kind='bar')
+
+
+
+# categorizing 'STATUS' column to binary classification   0 : Eligible Client and 1 : Ineligible client
+credit_record['STATUS'].replace(['C', 'X'],0, inplace=True)
+
+
+credit_record['STATUS'].replace(['2','3','4','5'],1, inplace=True)
+
+
+credit_record['STATUS'] = credit_record['STATUS'].astype('int64')
+
+
+
+credit_df = credit_record.groupby('ID').agg(max).reset_index()
+
+
+
+credit_df['STATUS'].value_counts()
+
+
+# merging the two datasets based on 'ID'
+df = pd.merge(application_record, credit_df, on='ID', how='inner')
+df.head()
+credit_record['STATUS'] = credit_record['STATUS'].astype('int64')
+
+
+
+
+df.shape
+
+
+
+# dropping 'ID' column as it is having only unique values (not required for ML Model)
+df.drop('ID', axis=1, inplace=True)
+
+
+# Dropping duplicate records
+df = df.drop_duplicates()
+df.reset_index(drop=True ,inplace=True)
+
+
+df.duplicated().sum()
+
+
+
+df.isnull().sum()
+
+
+
+df.info()
+
+
+
+# This graph shows that, there is no column (Feature) which is highly co-related with 'Status'
+plt.figure(figsize = (20,10))
+sns.heatmap(df.corr(), annot=True)
+plt.show()
+
+
+
+# This graph shows that, majority of application are submitted by Female's
+plt.figure(figsize=(8,8))
+plt.pie(df['CODE_GENDER'].value_counts(), labels=['Female', 'Male'], autopct='%1.2f%%')
+plt.title('% of Applications submitted based on Gender')
+plt.show()
+
+
+# This graph shows that, majority of application are approved for Female's
+plt.figure(figsize=(8,8))
+plt.pie(df[df['STATUS']==0]['CODE_GENDER'].value_counts(), labels=['Female', 'Male'], autopct='%1.2f%%')
+plt.title('% of Applications Approved based on Gender')
+plt.show()
+
+
+# This graph shows that, majority of applicatant's dont own a car
+plt.figure(figsize=(8,8))
+plt.pie(df['FLAG_OWN_CAR'].value_counts(), labels=['No', 'Yes'], autopct='%1.2f%%')
+plt.title('% of Applications submitted based on owning a Car')
+plt.show()
+
+
+
+# This graph shows that, majority of applicatant's own a Real Estate property / House
+plt.figure(figsize=(8,8))
+plt.pie(df['FLAG_OWN_REALTY'].value_counts(), labels=['Yes','No'], autopct='%1.2f%%')
+plt.title('% of Applications submitted based on owning a Real estate property')
+plt.show()
+
+
+
+# This graph shows that, majority of applicatant's don't have any children
+plt.figure(figsize = (10,10))
+plt.pie(df['CNT_CHILDREN'].value_counts(), labels=df['CNT_CHILDREN'].value_counts().index, autopct='%1.2f%%')
+plt.title('% of Applications submitted based on Children count')
+plt.legend()
+plt.show()
